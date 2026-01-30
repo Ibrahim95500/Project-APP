@@ -1,0 +1,71 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id        String   @id @default(cuid())
+  email     String   @unique
+  name      String?
+  password  String   // Hashed
+  role      Role     @default(USER)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model Service {
+  id           String        @id @default(cuid())
+  name         String
+  description  String?
+  durationMin  Int
+  price        Float
+  active       Boolean       @default(true)
+  appointments Appointment[]
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+}
+
+model WorkingHours {
+  id        String   @id @default(cuid())
+  dayOfWeek Int      // 0=Sunday, 1=Monday...
+  startTime String   // "09:00"
+  endTime   String   // "17:00"
+  active    Boolean  @default(true)
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([dayOfWeek, startTime, endTime])
+}
+
+model Appointment {
+  id          String   @id @default(cuid())
+  startAt     DateTime
+  endAt       DateTime
+  status      Status   @default(PENDING)
+  
+  // Relations
+  serviceId   String
+  service     Service  @relation(fields: [serviceId], references: [id])
+  
+  clientName  String?
+  clientEmail String?
+  clientPhone String?
+  
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+enum Status {
+  PENDING
+  CONFIRMED
+  CANCELLED
+  COMPLETED
+}
