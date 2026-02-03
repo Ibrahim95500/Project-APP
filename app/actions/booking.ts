@@ -12,13 +12,12 @@ export async function getAvailableSlots(dateString: string, serviceId: string, u
     })
     if (!service) throw new Error("Service not found")
 
-    // 2. Get Working Hours for this day
-    const workingHours = await prisma.workingHours.findFirst({
+    // 2. Get Working Hours for this day (même table que /admin/working-hours)
+    const workingHoursList = await prisma.workingHours.findMany({
         where: { userId, dayOfWeek, active: true }
     })
 
-    // Closed today
-    if (!workingHours) return []
+    if (!workingHoursList.length) return []
 
     // 3. Get existing appointments
     const startOfDayDate = startOfDay(date)
@@ -35,31 +34,33 @@ export async function getAvailableSlots(dateString: string, serviceId: string, u
         }
     })
 
-    // 4. Generate Slots
-    const slots = []
-    const [startHour, startMin] = workingHours.startTime.split(':').map(Number)
-    const [endHour, endMin] = workingHours.endTime.split(':').map(Number)
-
-    let currentSlot = setMinutes(setHours(date, startHour), startMin)
-    const endTime = setMinutes(setHours(date, endHour), endMin)
-
+    // 4. Generate Slots for each plage d'ouverture, then merge and sort
     const stepMin = 30
+    const allSlots: string[] = []
 
-    while (isBefore(addMinutes(currentSlot, service.durationMin), endTime) || addMinutes(currentSlot, service.durationMin).getTime() === endTime.getTime()) {
-        const slotEnd = addMinutes(currentSlot, service.durationMin)
+    for (const wh of workingHoursList) {
+        const [startHour, startMin] = wh.startTime.split(':').map(Number)
+        const [endHour, endMin] = wh.endTime.split(':').map(Number)
 
-        const isBusy = appointments.some(apt => {
-            return isBefore(currentSlot, apt.endAt) && isAfter(slotEnd, apt.startAt)
-        })
+        let currentSlot = setMinutes(setHours(date, startHour), startMin)
+        const endTime = setMinutes(setHours(date, endHour), endMin)
 
-        if (!isBusy) {
-            slots.push(format(currentSlot, 'HH:mm'))
+        while (isBefore(addMinutes(currentSlot, service.durationMin), endTime) || addMinutes(currentSlot, service.durationMin).getTime() === endTime.getTime()) {
+            const slotEnd = addMinutes(currentSlot, service.durationMin)
+
+            const isBusy = appointments.some(apt => {
+                return isBefore(currentSlot, apt.endAt) && isAfter(slotEnd, apt.startAt)
+            })
+
+            if (!isBusy) {
+                allSlots.push(format(currentSlot, 'HH:mm'))
+            }
+
+            currentSlot = addMinutes(currentSlot, stepMin)
         }
-
-        currentSlot = addMinutes(currentSlot, stepMin)
     }
 
-    return slots
+    return [...new Set(allSlots)].sort()
 }
 
 export async function createPublicAppointment(formData: FormData) {
@@ -78,26 +79,30 @@ export async function createPublicAppointment(formData: FormData) {
 
     const endAt = addMinutes(startAt, service.durationMin)
 
-    // Check Working Hours
+    // Check Working Hours (même table que /admin/working-hours)
     const dayOfWeek = getDay(startAt)
-    const workingHours = await prisma.workingHours.findFirst({
+    const workingHoursList = await prisma.workingHours.findMany({
         where: { userId, dayOfWeek, active: true }
     })
 
-    if (!workingHours) {
+    if (!workingHoursList.length) {
         throw new Error('Le professionnel est fermé ce jour-là')
     }
-
-    const [startH, startM] = workingHours.startTime.split(':').map(Number)
-    const [endH, endM] = workingHours.endTime.split(':').map(Number)
-    const startLimitMin = startH * 60 + startM
-    const endLimitMin = endH * 60 + endM
 
     const aptStartMin = startAt.getHours() * 60 + startAt.getMinutes()
     const aptEndMin = endAt.getHours() * 60 + endAt.getMinutes()
 
-    if (aptStartMin < startLimitMin || aptEndMin > endLimitMin) {
-        throw new Error(`En dehors des horaires d'ouverture (${workingHours.startTime} - ${workingHours.endTime})`)
+    const fitsInSomeRange = workingHoursList.some(wh => {
+        const [startH, startM] = wh.startTime.split(':').map(Number)
+        const [endH, endM] = wh.endTime.split(':').map(Number)
+        const startLimitMin = startH * 60 + startM
+        const endLimitMin = endH * 60 + endM
+        return aptStartMin >= startLimitMin && aptEndMin <= endLimitMin
+    })
+
+    if (!fitsInSomeRange) {
+        const first = workingHoursList[0]
+        throw new Error(`En dehors des horaires d'ouverture (${first.startTime} - ${first.endTime})`)
     }
 
     // Check for existing client for this professional

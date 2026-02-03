@@ -71,6 +71,32 @@ async function main() {
     } else {
         console.log('Services déjà existants pour le compte PRO, skip.')
     }
+
+    // Horaires d'ouverture par défaut pour le PRO (Lundi–Vendredi 9h–18h)
+    const existingHours = await prisma.workingHours.count({ where: { userId: proUser.id } })
+    if (existingHours === 0) {
+        const days = [
+            { dayOfWeek: 1, label: 'Lundi' },
+            { dayOfWeek: 2, label: 'Mardi' },
+            { dayOfWeek: 3, label: 'Mercredi' },
+            { dayOfWeek: 4, label: 'Jeudi' },
+            { dayOfWeek: 5, label: 'Vendredi' },
+        ]
+        for (const { dayOfWeek, label } of days) {
+            await prisma.workingHours.create({
+                data: {
+                    userId: proUser.id,
+                    dayOfWeek,
+                    startTime: '09:00',
+                    endTime: '18:00',
+                    active: true,
+                },
+            })
+        }
+        console.log('✅ Horaires d\'ouverture créés pour le PRO (Lun–Ven 9h–18h)')
+    } else {
+        console.log('Horaires déjà existants pour le compte PRO, skip.')
+    }
 }
 
 main()

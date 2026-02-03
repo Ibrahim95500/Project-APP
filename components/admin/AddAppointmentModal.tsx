@@ -13,7 +13,13 @@ interface Service {
     price: number
 }
 
-export default function AddAppointmentModal({ services }: { services: Service[] }) {
+export default function AddAppointmentModal({
+    services,
+    workingHoursSummary = null
+}: {
+    services: Service[]
+    workingHoursSummary?: string | null
+}) {
     const [isOpen, setIsOpen] = useState(false)
     const [isLoading, setIsLoading] = useState(false)
     const [error, setError] = useState<string | null>(null)
@@ -68,6 +74,11 @@ export default function AddAppointmentModal({ services }: { services: Service[] 
                             <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">
                                 Enregistrez un rendez-vous pris par téléphone ou en direct
                             </p>
+                            {workingHoursSummary && (
+                                <p className="text-gray-500 text-xs font-medium mt-2">
+                                    Créneaux acceptés : selon vos horaires ({workingHoursSummary}). Hors plage = refus.
+                                </p>
+                            )}
                         </div>
 
                         {error && (

@@ -28,26 +28,30 @@ export async function createManualAppointment(formData: FormData) {
     const startAt = new Date(startAtString)
     const endAt = new Date(startAt.getTime() + service.durationMin * 60000)
 
-    // 3. Check Working Hours
+    // 3. Vérifier les horaires d'ouverture (même table que /admin/working-hours)
     const dayOfWeek = startAt.getDay()
-    const workingHours = await prisma.workingHours.findFirst({
-        where: { userId: session.user.id, dayOfWeek }
+    const workingHoursList = await prisma.workingHours.findMany({
+        where: { userId: session.user.id, dayOfWeek, active: true }
     })
 
-    if (!workingHours || !workingHours.active) {
-        throw new Error('Créneau impossible: Le professionnel est fermé ce jour-là')
+    if (!workingHoursList.length) {
+        throw new Error('Créneau impossible: Le professionnel est fermé ce jour-là. Définissez vos horaires sur la page Horaires d\'ouverture.')
     }
-
-    const [startH, startM] = workingHours.startTime.split(':').map(Number)
-    const [endH, endM] = workingHours.endTime.split(':').map(Number)
-    const startLimitMin = startH * 60 + startM
-    const endLimitMin = endH * 60 + endM
 
     const aptStartMin = startAt.getHours() * 60 + startAt.getMinutes()
     const aptEndMin = endAt.getHours() * 60 + endAt.getMinutes()
 
-    if (aptStartMin < startLimitMin || aptEndMin > endLimitMin) {
-        throw new Error(`En dehors des horaires d'ouverture (${workingHours.startTime} - ${workingHours.endTime})`)
+    const fitsInSomeRange = workingHoursList.some(wh => {
+        const [startH, startM] = wh.startTime.split(':').map(Number)
+        const [endH, endM] = wh.endTime.split(':').map(Number)
+        const startLimitMin = startH * 60 + startM
+        const endLimitMin = endH * 60 + endM
+        return aptStartMin >= startLimitMin && aptEndMin <= endLimitMin
+    })
+
+    if (!fitsInSomeRange) {
+        const first = workingHoursList[0]
+        throw new Error(`En dehors des horaires d'ouverture (ex. ${first.startTime} - ${first.endTime}). Vérifiez la page Horaires d'ouverture.`)
     }
 
     // 4. Check for conflicts for THIS user

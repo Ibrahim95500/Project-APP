@@ -13,10 +13,14 @@ export default async function WorkingHoursPage() {
 
     const hours = await prisma.workingHours.findMany({
         where: { userId: session.user.id },
-        orderBy: { dayOfWeek: 'asc' }
+        orderBy: [{ dayOfWeek: 'asc' }, { startTime: 'asc' }]
     })
 
-    const hoursMap = new Map(hours.map(h => [h.dayOfWeek, h]))
+    // Une entrée par jour (première plage en cas de doublon) — cohérent avec la table
+    const hoursMap = new Map<number, (typeof hours)[0]>()
+    for (const h of hours) {
+        if (!hoursMap.has(h.dayOfWeek)) hoursMap.set(h.dayOfWeek, h)
+    }
 
     return (
         <div className="max-w-4xl mx-auto space-y-12">
