@@ -9,59 +9,58 @@
 /** Colors - https://tailwindcss.com/docs/colors **/
 :root {
   --background: var(--color-white);
-  --foreground: var(--color-zinc-950);
+  --foreground: #0F172A;
+  /* NEXO Midnight Slate */
   --card: var(--color-white);
-  --card-foreground: var(--color-zinc-950);
+  --card-foreground: #0F172A;
   --popover: var(--color-white);
-  --popover-foreground: var(--color-zinc-950);
-  --primary: var(--color-zinc-900);
+  --popover-foreground: #0F172A;
+  --primary: #7C3AED;
+  /* NEXO Electric Nexus */
   --primary-foreground: var(--color-white);
-  --secondary: var(--color-zinc-100);
-  --secondary-foreground: var(--color-zinc-900);
-  --muted: var(--color-zinc-100);
-  --muted-foreground: var(--color-zinc-500);
-  --accent: var(--color-zinc-100);
-  --accent-foreground: var(--color-zinc-900);
+  --secondary: var(--color-slate-100);
+  --secondary-foreground: #0F172A;
+  --muted: var(--color-slate-100);
+  --muted-foreground: #64748B;
+  /* NEXO Steel Gray */
+  --accent: #F5F3FF;
+  /* Light Electric Purple */
+  --accent-foreground: #7C3AED;
   --destructive: var(--color-red-600);
   --destructive-foreground: var(--color-white);
-  --chart-1: var(--color-blue-500);
-  --chart-2: var(--color-green-500);
-  --chart-3: var(--color-yellow-500);
-  --chart-4: var(--color-red-500);
-  --chart-5: var(--color-purple-500);
-  --border: oklch(
-    94% 0.004 286.32
-  ); /* between --color-zinc-100 and --color-zinc-200 */
-  --input: var(--color-zinc-200);
-  --ring: var(--color-zinc-400);
-  --radius: 0.5rem;
+  --border: #E2E8F0;
+  --input: #F1F5F9;
+  --ring: #7C3AED;
+  --radius: 1rem;
+
+  /* NEXO Dynamic Variables */
+  --app-bg: #FFFFFF;
+  --card-bg: #F8FAFC;
+  --text-main: #0F172A;
+  --primary-rgb: 124, 58, 237;
+  --bg-rgb: 255, 255, 255;
 }
 
 .dark {
-  --background: var(--color-zinc-950);
-  --foreground: var(--color-zinc-50);
-  --card: var(--color-zinc-950);
-  --card-foreground: var(--color-zinc-50);
-  --popover: var(--color-zinc-950);
-  --popover-foreground: var(--color-zinc-50);
-  --primary: var(--color-zinc-300);
-  --primary-foreground: var(--color-zinc-950);
-  --secondary: var(--color-zinc-800);
-  --secondary-foreground: var(--color-zinc-50);
-  --muted: var(--color-zinc-900);
-  --muted-foreground: var(--color-zinc-500);
-  --accent: var(--color-zinc-900);
-  --accent-foreground: var(--color-zinc-50);
-  --destructive: var(--color-red-600);
-  --destructive-foreground: var(--color-white);
-  --chart-1: var(--color-blue-500);
-  --chart-2: var(--color-green-500);
-  --chart-3: var(--color-yellow-500);
-  --chart-4: var(--color-red-500);
-  --chart-5: var(--color-purple-500);
-  --border: var(--color-zinc-800);
-  --input: var(--color-zinc-800);
-  --ring: var(--color-zinc-600);
+  --background: #020617;
+  --foreground: #F8FAFC;
+  --card: #0F172A;
+  --card-foreground: #F8FAFC;
+  --popover: #0F172A;
+  --popover-foreground: #F8FAFC;
+  --primary: #A78BFA;
+  --primary-foreground: #0F172A;
+  --secondary: #1E293B;
+  --secondary-foreground: #F8FAFC;
+  --muted: #1E293B;
+  --muted-foreground: #94A3B8;
+  --accent: #1E293B;
+  --accent-foreground: #A78BFA;
+  --destructive: #EF4444;
+  --destructive-foreground: #FFFFFF;
+  --border: #1E293B;
+  --input: #1E293B;
+  --ring: #7C3AED;
 }
 
 /** Theme Setup **/
@@ -101,14 +100,17 @@
     from {
       transform: translateX(0);
     }
+
     to {
       transform: translateX(calc(-100% - var(--gap)));
     }
   }
+
   @keyframes marquee-vertical {
     from {
       transform: translateY(0);
     }
+
     to {
       transform: translateY(calc(-100% - var(--gap)));
     }
@@ -118,11 +120,16 @@
 /** Global Styles **/
 @layer base {
   * {
-    @apply border-border;
+    @apply border-border transition-colors duration-300;
   }
 
   *:focus-visible {
-    @apply outline-ring rounded-xs shadow-none outline-2 outline-offset-3 transition-none!;
+    @apply !outline-ring rounded-xs shadow-none outline-2 outline-offset-3 !transition-none;
+  }
+
+  body {
+    background-color: var(--app-bg);
+    color: var(--text-main);
   }
 }
 
@@ -131,13 +138,16 @@
   ::-webkit-scrollbar {
     width: 5px;
   }
+
   ::-webkit-scrollbar-track {
     background: transparent;
   }
+
   ::-webkit-scrollbar-thumb {
     background: var(--input);
     border-radius: 5px;
   }
+
   * {
     scrollbar-width: thin;
     scrollbar-color: var(--input) transparent;
@@ -153,7 +163,7 @@ html {
 @utility container {
   @apply mx-auto max-w-none px-4 lg:px-5;
 
-  @media (width >= --theme(--breakpoint-xl)) {
+  @media (width >=--theme(--breakpoint-xl)) {
     @apply max-w-(--breakpoint-xl);
   }
 }
@@ -164,3 +174,93 @@ html {
 
 /* Metronic Configs */
 @import './config.metronic.css';
+
+/* DayPicker Premium Styling */
+.rdp {
+  --rdp-cell-size: 40px;
+  --rdp-accent-color: #4f46e5;
+  --rdp-background-color: #f5f3ff;
+  --rdp-accent-color-foreground: white;
+  margin: 0;
+  color: #111827 !important;
+  /* Force dark gray/black text */
+}
+
+.rdp-day {
+  color: #374151 !important;
+  /* Gray 700 for numbers */
+  font-weight: 600;
+}
+
+.rdp-day_selected,
+.rdp-day_selected:focus-visible,
+.rdp-day_selected:hover {
+  background-color: var(--rdp-accent-color) !important;
+  color: var(--rdp-accent-color-foreground) !important;
+  font-weight: 900 !important;
+  border-radius: 12px !important;
+}
+
+.rdp-button:hover:not([disabled]):not(.rdp-day_selected) {
+  background-color: var(--rdp-background-color) !important;
+  border-radius: 12px !important;
+  color: #4f46e5 !important;
+}
+
+/* Appointment Dot Indicator */
+.rdp-day_booked {
+  position: relative !important;
+}
+
+.rdp-day_booked::after {
+  content: "" !important;
+  display: block !important;
+  position: absolute !important;
+  bottom: 4px !important;
+  left: 50% !important;
+  transform: translateX(-50%) !important;
+  width: 6px !important;
+  height: 6px !important;
+  background-color: #8b5cf6 !important;
+  /* Indigo/Violet */
+  border-radius: 9999px !important;
+  z-index: 10 !important;
+}
+
+.rdp-day_selected.rdp-day_booked::after {
+  background-color: white !important;
+  /* Contrast when selected */
+}
+
+.rdp-head_cell {
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.1em;
+  color: #4b5563 !important;
+  /* Gray 600 instead of 400 */
+  padding-bottom: 20px;
+}
+
+.rdp-nav_button {
+  background-color: white;
+  border: 1px solid #e5e7eb;
+  /* Darker border */
+  border-radius: 10px !important;
+  color: #374151 !important;
+  /* Darker symbols */
+  transition: all 0.2s;
+}
+
+.rdp-nav_button:hover {
+  background-color: #f9fafb;
+  color: #111827;
+}
+
+.rdp-caption_label {
+  font-size: 14px;
+  font-weight: 900;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #111827 !important;
+}

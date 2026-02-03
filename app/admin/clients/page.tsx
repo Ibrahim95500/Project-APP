@@ -1,71 +1,35 @@
-
-import { prisma } from "@/lib/prisma"
-import { format } from "date-fns"
-import { fr } from "date-fns/locale"
+import { getClients } from "@/app/actions/clients"
+import { Users } from "lucide-react"
+import AddClientModal from "@/components/admin/AddClientModal"
+import ClientsList from "@/components/admin/ClientsList"
 
 export default async function ClientsPage() {
-    const clients = await prisma.client.findMany({
-        orderBy: { name: 'asc' },
-        include: {
-            _count: {
-                select: { appointments: true }
-            },
-            appointments: {
-                take: 1,
-                orderBy: { startAt: 'desc' },
-                select: { startAt: true }
-            }
-        }
-    })
-
-    // Also fetch unique legacy clients from appointments who are not in Client table yet?
-    // For MVP we assume new clients are created in Client table or we sync them.
-    // Actually, let's just show the Client model list for now.
+    const clients = await getClients()
 
     return (
-        <div className="container mx-auto py-10">
-            <h1 className="text-2xl font-bold mb-6">Clients</h1>
+        <div className="space-y-10 pb-20">
+            {/* Header section */}
+            <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+                <div className="space-y-4">
+                    <div className="inline-flex items-center gap-2 px-4 py-1.5 bg-indigo-50 rounded-full text-indigo-700 text-[10px] font-black uppercase tracking-widest border border-indigo-100/50 shadow-sm">
+                        <Users className="w-3.5 h-3.5" />
+                        Base de données
+                    </div>
+                    <h1 className="text-5xl font-black text-gray-950 tracking-tighter uppercase leading-none">
+                        Mes <span className="text-indigo-600">Clients</span>
+                    </h1>
+                    <p className="text-gray-400 font-bold uppercase tracking-widest text-[10px]">
+                        Gérez vos relations et visualisez l'historique
+                    </p>
+                </div>
 
-            <div className="rounded-md border bg-white">
-                <div className="relative w-full overflow-auto">
-                    <table className="w-full caption-bottom text-sm">
-                        <thead className="[&_tr]:border-b">
-                            <tr className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Nom</th>
-                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Contact</th>
-                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Nombre de RDV</th>
-                                <th className="h-12 px-4 text-left align-middle font-medium text-muted-foreground">Dernier RDV</th>
-                                <th className="h-12 px-4 text-right align-middle font-medium text-muted-foreground">Actions</th>
-                            </tr>
-                        </thead>
-                        <tbody className="[&_tr:last-child]:border-0">
-                            {clients.map((client) => (
-                                <tr key={client.id} className="border-b transition-colors hover:bg-muted/50 data-[state=selected]:bg-muted">
-                                    <td className="p-4 align-middle font-medium">{client.name}</td>
-                                    <td className="p-4 align-middle">
-                                        <div className="text-sm">{client.email}</div>
-                                        <div className="text-xs text-gray-500">{client.phone}</div>
-                                    </td>
-                                    <td className="p-4 align-middle">{client._count.appointments}</td>
-                                    <td className="p-4 align-middle">
-                                        {client.appointments[0] ? format(client.appointments[0].startAt, 'dd/MM/yyyy', { locale: fr }) : '-'}
-                                    </td>
-                                    <td className="p-4 align-middle text-right">
-                                        <button className="text-blue-600 hover:text-blue-900 mr-4">
-                                            Voir détails
-                                        </button>
-                                    </td>
-                                </tr>
-                            ))}
-                            {clients.length === 0 && (
-                                <tr>
-                                    <td colSpan={5} className="p-4 text-center text-muted-foreground">Aucun client enregistré</td>
-                                </tr>
-                            )}
-                        </tbody>
-                    </table>
+                <div className="flex items-center gap-4">
+                    <AddClientModal />
                 </div>
             </div>
+
+            {/* Clients Table / List */}
+            <ClientsList initialClients={clients} />
         </div>
     )
 }

@@ -16,7 +16,7 @@ export default async function BookingPage() {
                     <p className="mt-2 text-gray-600">Choisissez votre prestation et votre créneau en quelques clics.</p>
                 </div>
 
-                <div className="bg-white rounded-xl shadow-lg overflow-hidden">
+                <div className="bg-card text-card-foreground rounded-xl shadow-lg border overflow-hidden">
                     <BookingWizard services={services} />
                 </div>
             </div>
