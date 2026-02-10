@@ -1,3 +1,5 @@
+'use server'
+
 import { prisma } from "@/lib/prisma"
 import { addMinutes, format, getDay, isAfter, isBefore, parse, setHours, setMinutes, startOfDay } from "date-fns"
 import { sendConfirmationEmail } from "./email"
@@ -63,7 +65,10 @@ export async function getAvailableSlots(dateString: string, serviceId: string, u
     return [...new Set(allSlots)].sort()
 }
 
+import { auth } from "@/auth"
+
 export async function createPublicAppointment(formData: FormData) {
+    const session = await auth()
     const userId = formData.get('userId') as string
     const serviceId = formData.get('serviceId') as string
     const dateStr = formData.get('date') as string
@@ -124,6 +129,7 @@ export async function createPublicAppointment(formData: FormData) {
             endAt,
             serviceId,
             clientId: client.id,
+            customerId: session?.user?.role === 'CLIENT' ? session.user.id : undefined,
             clientName: name,
             clientEmail: email,
             clientPhone: phone,
@@ -165,4 +171,17 @@ export async function createPublicAppointment(formData: FormData) {
     }
 
     return { success: true }
+}
+
+export type AppointmentActionResult =
+    | { success: true; data?: any }
+    | { success: false; error: string }
+
+export async function createAppointment(formData: FormData) {
+    // Re-use logic or call createPublicAppointment if appropriate, 
+    // but for signed-in clients we might want slight diffs.
+    // For now, let's just alias it or implement it.
+
+    // We can reuse createPublicAppointment logic but ensuring session user
+    return createPublicAppointment(formData)
 }

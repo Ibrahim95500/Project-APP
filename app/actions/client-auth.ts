@@ -1,3 +1,5 @@
+'use server'
+
 import { prisma } from "@/lib/prisma"
 import bcrypt from "bcryptjs"
 import { signIn } from "@/auth"
@@ -70,7 +72,7 @@ export async function registerClient(formData: FormData) {
         return { success: true, message: "Un email de vérification a été envoyé à votre adresse." }
     } catch (error) {
         console.error("Registration error:", error)
-        return { error: "Une erreur est survenue lors de l'inscription" }
+        return { error: `Erreur: ${(error as Error).message}` }
     }
 }
 

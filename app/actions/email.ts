@@ -15,9 +15,16 @@ interface SendConfirmationEmailParams {
 }
 
 export async function sendConfirmationEmail(params: SendConfirmationEmailParams) {
-    try {
-        const { to, ...emailData } = params
+    const { to, ...emailData } = params
 
+    if (!resend) {
+        console.log('⚠️ Email sending mocked (RESEND_API_KEY missing)')
+        console.log('To:', to)
+        console.log('Subject:', `✅ Confirmation de rendez-vous - ${emailData.serviceName}`)
+        return { success: true, data: { id: 'mock-id' } }
+    }
+
+    try {
         const { data, error } = await resend.emails.send({
             from: process.env.RESEND_FROM_EMAIL || 'NEXO <onboarding@resend.dev>',
             to: [to],
@@ -50,9 +57,16 @@ interface SendReminderEmailParams {
 }
 
 export async function sendReminderEmail(params: SendReminderEmailParams) {
-    try {
-        const { to, ...emailData } = params
+    const { to, ...emailData } = params
 
+    if (!resend) {
+        console.log('⚠️ Email sending mocked (RESEND_API_KEY missing)')
+        console.log('To:', to)
+        console.log('Subject:', `⏰ Rappel - Rendez-vous demain chez ${emailData.businessName}`)
+        return { success: true, data: { id: 'mock-id' } }
+    }
+
+    try {
         const { data, error } = await resend.emails.send({
             from: process.env.RESEND_FROM_EMAIL || 'NEXO <onboarding@resend.dev>',
             to: [to],
@@ -80,9 +94,17 @@ interface SendVerificationEmailParams {
 }
 
 export async function sendVerificationEmail(params: SendVerificationEmailParams) {
-    try {
-        const { to, name, verificationUrl } = params
+    const { to, name, verificationUrl } = params
 
+    if (!resend) {
+        console.log('⚠️ Email sending mocked (RESEND_API_KEY missing)')
+        console.log('To:', to)
+        console.log('Subject:', '✅ Activez votre compte NEXO')
+        console.log('Verification URL:', verificationUrl)
+        return { success: true, data: { id: 'mock-id' } }
+    }
+
+    try {
         const { data, error } = await resend.emails.send({
             from: process.env.RESEND_FROM_EMAIL || 'NEXO <onboarding@resend.dev>',
             to: [to],

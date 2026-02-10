@@ -24,6 +24,10 @@ export const authConfig = {
 
             // Protection of client routes (CLIENT only)
             if (isOnClient) {
+                // Allow access to client auth pages
+                if (nextUrl.pathname.startsWith("/client/login") || nextUrl.pathname.startsWith("/client/register") || nextUrl.pathname.startsWith("/client/verify-email")) {
+                    return true
+                }
                 if (isLoggedIn && userRole === "CLIENT") return true
                 return false // Redirect to login
             }

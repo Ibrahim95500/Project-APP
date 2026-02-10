@@ -19,7 +19,7 @@ export default async function ClientDashboard() {
         where: {
             OR: [
                 { clientEmail: session.user.email },
-                // Future: { clientId: session.user.id } when we link accounts
+                { customerId: session.user.id }
             ]
         },
         include: {
@@ -54,12 +54,20 @@ export default async function ClientDashboard() {
                             Gérez vos rendez-vous
                         </p>
                     </div>
-                    <Link
-                        href="/"
-                        className="inline-flex items-center justify-center rounded-full bg-primary px-10 py-4 text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
-                    >
-                        Nouvelle réservation
-                    </Link>
+                    <div className="flex gap-4">
+                        <Link
+                            href="/client/profile"
+                            className="inline-flex items-center justify-center rounded-full border-2 border-primary/20 px-10 py-4 text-[11px] font-black uppercase tracking-widest text-primary hover:bg-primary/5 active:scale-95 transition-all"
+                        >
+                            Mon Profil
+                        </Link>
+                        <Link
+                            href="/client/book"
+                            className="inline-flex items-center justify-center rounded-full bg-primary px-10 py-4 text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
+                        >
+                            Nouvelle réservation
+                        </Link>
+                    </div>
                 </div>
 
                 {/* Stats */}
@@ -136,8 +144,8 @@ export default async function ClientDashboard() {
 
                                         <div className="flex flex-col gap-3">
                                             <span className={`px-6 py-2 rounded-full text-[10px] font-black uppercase tracking-widest ${apt.status === 'CONFIRMED' ? 'bg-green-500/10 text-green-600' :
-                                                    apt.status === 'PENDING' ? 'bg-yellow-500/10 text-yellow-600' :
-                                                        'bg-gray-500/10 text-gray-600'
+                                                apt.status === 'PENDING' ? 'bg-yellow-500/10 text-yellow-600' :
+                                                    'bg-gray-500/10 text-gray-600'
                                                 }`}>
                                                 {apt.status === 'CONFIRMED' ? 'Confirmé' :
                                                     apt.status === 'PENDING' ? 'En attente' :

@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -6,7 +7,9 @@ import { DayPicker } from 'react-day-picker';
 import { cn } from '@/lib/utils';
 import { buttonVariants } from '@/components/ui/button';
 
-function Calendar({ className, classNames, showOutsideDays = true, ...props }) {
+export type CalendarProps = React.ComponentProps<typeof DayPicker>
+
+function Calendar({ className, classNames, showOutsideDays = true, ...props }: CalendarProps) {
   return (
     <DayPicker
       showOutsideDays={showOutsideDays}
@@ -14,8 +17,7 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }) {
       classNames={{
         months: 'relative flex flex-col sm:flex-row gap-4',
         month: 'w-full',
-        month_caption:
-          'relative mx-10 mb-1 flex h-8 items-center justify-center z-20',
+        month_caption: 'relative mx-10 mb-1 flex h-8 items-center justify-center z-20',
         caption_label: 'text-sm font-medium',
         nav: 'absolute top-0 flex w-full justify-between z-10',
         button_previous: cn(
@@ -42,7 +44,8 @@ function Calendar({ className, classNames, showOutsideDays = true, ...props }) {
         ...classNames,
       }}
       components={{
-        Chevron: (props) => {
+        /* @ts-ignore - shadcn/ui typical override */
+        Chevron: (props: any) => {
           if (props.orientation === 'left') {
             return <ChevronLeft className="h-4 w-4 rtl:rotate-180" />;
           } else {
