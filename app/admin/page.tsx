@@ -33,7 +33,8 @@ export default async function AdminDashboardPage() {
         newClients,
         activeServices,
         upcomingAppointments,
-        allTodayAppointments
+        allTodayAppointments,
+        pendingAppointments
     ] = await Promise.all([
         prisma.appointment.count({
             where: { userId, startAt: { gte: todayStart, lte: todayEnd }, status: { not: 'CANCELLED' } }
@@ -53,6 +54,11 @@ export default async function AdminDashboardPage() {
         prisma.appointment.findMany({
             where: { userId, startAt: { gte: todayStart, lte: todayEnd }, status: { not: 'CANCELLED' } },
             include: { service: true }
+        }),
+        prisma.appointment.findMany({
+            where: { userId, status: 'PENDING' },
+            include: { service: true },
+            orderBy: { startAt: 'asc' }
         })
     ])
 
@@ -71,6 +77,31 @@ export default async function AdminDashboardPage() {
     return (
         <PageContainer maxWidth="7xl">
             <div className="space-y-10">
+                {/* Pending Appointments Alert */}
+                {pendingAppointments.length > 0 && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-[2.5rem] p-8 flex flex-col md:flex-row items-center justify-between gap-6 animate-in fade-in slide-in-from-top-4 duration-500">
+                        <div className="flex items-center gap-6 text-center md:text-left">
+                            <div className="w-16 h-16 bg-amber-100 rounded-3xl flex items-center justify-center text-amber-600 shadow-inner">
+                                <Clock className="w-8 h-8" />
+                            </div>
+                            <div>
+                                <h2 className="text-xl font-black text-amber-900 tracking-tight">
+                                    Vous avez {pendingAppointments.length} rendez-vous en attente
+                                </h2>
+                                <p className="text-amber-700/80 font-medium text-sm">
+                                    Les clients attendent votre validation pour confirmer leur créneau.
+                                </p>
+                            </div>
+                        </div>
+                        <Link
+                            href="/admin/appointments"
+                            className="bg-amber-600 text-white px-8 py-4 rounded-full font-black uppercase tracking-widest text-[10px] hover:bg-amber-700 transition-all shadow-lg shadow-amber-600/20 whitespace-nowrap"
+                        >
+                            Gérer les demandes
+                        </Link>
+                    </div>
+                )}
+
                 {/* Upper Header */}
                 <div>
                     <h1 className="text-4xl font-black tracking-tight mb-2" style={{ color: 'var(--text-main)' }}>

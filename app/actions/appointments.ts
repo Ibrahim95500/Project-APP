@@ -3,6 +3,7 @@
 import { prisma } from "@/lib/prisma"
 import { revalidatePath } from "next/cache"
 import { auth } from "@/auth"
+import { sendInvoiceEmail } from "./email"
 
 export async function createManualAppointment(formData: FormData) {
     const session = await auth()
@@ -93,4 +94,65 @@ export async function deleteAppointment(id: string) {
     })
 
     revalidatePath('/admin/appointments')
+}
+
+export async function updateAppointmentStatus(id: string, status: 'CONFIRMED' | 'CANCELLED' | 'PENDING') {
+    const session = await auth()
+    if (!session?.user?.id) throw new Error("Non autorisé")
+
+    await prisma.appointment.update({
+        where: { id, userId: session.user.id },
+        data: { status }
+    })
+
+    revalidatePath('/admin/appointments')
+    revalidatePath('/admin')
+}
+
+export async function getPendingAppointmentsCount() {
+    const session = await auth()
+    if (!session?.user?.id) return 0
+
+    return await prisma.appointment.count({
+        where: {
+            userId: session.user.id,
+            status: 'PENDING'
+        }
+    })
+}
+
+export async function sendInvoiceEmailAction(appointmentId: string) {
+    const session = await auth()
+    // Support both PRO (owning the appointment) and CLIENT (being the customer)
+    const appointment = await prisma.appointment.findUnique({
+        where: { id: appointmentId },
+        include: {
+            service: true,
+            user: true, // Pro
+        }
+    })
+
+    if (!appointment) throw new Error("Facture introuvable")
+
+    // Auth check: Is session user the Pro or the Client?
+    const isPro = session?.user?.id === appointment.userId
+    const isClient = session?.user?.id === appointment.customerId
+
+    if (!isPro && !isClient) {
+        throw new Error("Non autorisé")
+    }
+
+    const invoiceNumber = `INV-${appointment.id.slice(-6).toUpperCase()}`
+    const invoiceUrl = `${process.env.NEXT_PUBLIC_APP_URL || 'http://localhost:3000'}/invoice/${appointment.id}`
+
+    return await sendInvoiceEmail({
+        to: appointment.clientEmail!,
+        clientName: appointment.clientName || "Client",
+        serviceName: appointment.service.name,
+        businessName: appointment.user.businessName || appointment.user.name || "NEXO",
+        startAt: appointment.startAt,
+        invoiceNumber,
+        amount: appointment.service.price,
+        invoiceUrl
+    })
 }

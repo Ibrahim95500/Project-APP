@@ -13,7 +13,8 @@ import {
     ExternalLink,
     LogOut,
     ChevronLeft,
-    ChevronRight
+    ChevronRight,
+    FileText
 } from 'lucide-react'
 import { signOut } from 'next-auth/react'
 
@@ -22,15 +23,17 @@ const navigation = [
     { name: 'Planning', href: '/admin/appointments', icon: Calendar },
     { name: 'Prestations', href: '/admin/services', icon: Scissors },
     { name: 'Clients', href: '/admin/clients', icon: Users },
+    { name: 'Factures', href: '/admin/invoices', icon: FileText },
     { name: 'Paramètres', href: '/admin/working-hours', icon: Settings },
 ]
 
 interface AdminSidebarProps {
     isCollapsed: boolean;
     onToggle: () => void;
+    pendingCount?: number;
 }
 
-export default function AdminSidebar({ isCollapsed, onToggle }: AdminSidebarProps) {
+export default function AdminSidebar({ isCollapsed, onToggle, pendingCount = 0 }: AdminSidebarProps) {
     const pathname = usePathname()
 
     return (
@@ -70,7 +73,7 @@ export default function AdminSidebar({ isCollapsed, onToggle }: AdminSidebarProp
                             href={item.href}
                             title={isCollapsed ? item.name : ""}
                             className={cn(
-                                "flex items-center gap-4 py-4 rounded-2xl text-sm font-black uppercase tracking-tighter transition-all duration-200",
+                                "flex items-center gap-4 py-4 rounded-2xl text-sm font-black uppercase tracking-tighter transition-all duration-200 relative",
                                 isCollapsed ? "px-0 justify-center" : "px-6",
                                 isActive
                                     ? "bg-primary text-white shadow-xl shadow-primary/20"
@@ -79,8 +82,16 @@ export default function AdminSidebar({ isCollapsed, onToggle }: AdminSidebarProp
                         >
                             <item.icon className={cn("w-5 h-5 flex-shrink-0", isActive ? "text-white" : "text-gray-300")} />
                             {!isCollapsed && (
-                                <span className="whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
+                                <span className="flex-grow whitespace-nowrap animate-in fade-in slide-in-from-left-2 duration-300">
                                     {item.name}
+                                </span>
+                            )}
+                            {item.name === 'Planning' && pendingCount > 0 && (
+                                <span className={cn(
+                                    "bg-red-500 text-white flex items-center justify-center rounded-full text-[10px] font-black",
+                                    isCollapsed ? "absolute top-2 right-2 w-4 h-4" : "w-5 h-5"
+                                )}>
+                                    {pendingCount}
                                 </span>
                             )}
                         </Link>

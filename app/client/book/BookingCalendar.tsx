@@ -38,6 +38,7 @@ export default function BookingCalendar({ serviceId, serviceName, serviceDuratio
         startAt.setHours(hours, minutes, 0, 0)
 
         const formData = new FormData()
+        formData.append("userId", proId)
         formData.append("serviceId", serviceId)
         formData.append("date", startAt.toISOString())
         formData.append("notes", "Réservation via l'interface client")

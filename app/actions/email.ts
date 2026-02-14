@@ -1,7 +1,7 @@
 "use server"
 
 import { resend } from "@/lib/email"
-import { confirmationEmailTemplate, reminderEmailTemplate, verificationEmailTemplate } from "@/lib/email-templates"
+import { confirmationEmailTemplate, reminderEmailTemplate, verificationEmailTemplate, invoiceEmailTemplate } from "@/lib/email-templates"
 
 interface SendConfirmationEmailParams {
     to: string
@@ -12,6 +12,48 @@ interface SendConfirmationEmailParams {
     endAt: Date
     address?: string
     phone?: string
+}
+
+interface SendInvoiceEmailParams {
+    to: string
+    clientName: string
+    serviceName: string
+    businessName: string
+    startAt: Date
+    invoiceNumber: string
+    amount: number
+    invoiceUrl: string
+}
+
+export async function sendInvoiceEmail(params: SendInvoiceEmailParams) {
+    const { to, ...emailData } = params
+
+    if (!resend) {
+        console.log('⚠️ Email sending mocked (RESEND_API_KEY missing)')
+        console.log('To:', to)
+        console.log('Subject:', `📄 Votre facture - ${emailData.businessName}`)
+        return { success: true, data: { id: 'mock-id' } }
+    }
+
+    try {
+        const { data, error } = await resend.emails.send({
+            from: process.env.RESEND_FROM_EMAIL || 'NEXO <onboarding@resend.dev>',
+            to: [to],
+            subject: `📄 Votre facture - ${emailData.businessName}`,
+            html: invoiceEmailTemplate(emailData)
+        })
+
+        if (error) {
+            console.error('Error sending invoice email:', error)
+            return { success: false, error }
+        }
+
+        console.log('Invoice email sent:', data)
+        return { success: true, data }
+    } catch (error) {
+        console.error('Failed to send invoice email:', error)
+        return { success: false, error }
+    }
 }
 
 export async function sendConfirmationEmail(params: SendConfirmationEmailParams) {

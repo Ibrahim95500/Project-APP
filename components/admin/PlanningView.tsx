@@ -3,10 +3,10 @@
 import { useState } from 'react'
 import { format, isSameDay, startOfDay } from 'date-fns'
 import { fr } from 'date-fns/locale'
-import { Calendar as LucideCalendar, User, Clock, Scissors, Search, Trash2 } from 'lucide-react'
+import { Calendar as LucideCalendar, User, Clock, Scissors, Search, Trash2, Check, X, FileText } from 'lucide-react'
 import { DayPicker } from 'react-day-picker'
 import { cn } from '@/lib/utils'
-import { deleteAppointment } from '@/app/actions/appointments'
+import { deleteAppointment, updateAppointmentStatus } from '@/app/actions/appointments'
 import { toast } from 'sonner'
 
 export default function PlanningView({ initialAppointments }: { initialAppointments: any[] }) {
@@ -31,6 +31,18 @@ export default function PlanningView({ initialAppointments }: { initialAppointme
             toast.success("Rendez-vous supprimé")
         } catch (error) {
             toast.error("Erreur lors de la suppression")
+        }
+    }
+
+    async function handleStatusUpdate(id: string, status: 'CONFIRMED' | 'CANCELLED') {
+        const message = status === 'CONFIRMED' ? "Valider ce rendez-vous ?" : "Annuler ce rendez-vous ?"
+        if (!confirm(message)) return
+
+        try {
+            await updateAppointmentStatus(id, status)
+            toast.success(status === 'CONFIRMED' ? "Rendez-vous confirmé" : "Rendez-vous annulé")
+        } catch (error) {
+            toast.error("Erreur lors de la mise à jour")
         }
     }
 
@@ -89,7 +101,13 @@ export default function PlanningView({ initialAppointments }: { initialAppointme
                 <div className="space-y-4">
                     {filteredAppointments.length > 0 ? (
                         filteredAppointments.sort((a, b) => new Date(a.startAt).getTime() - new Date(b.startAt).getTime()).map((apt) => (
-                            <div key={apt.id} className="bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center gap-8 group">
+                            <div
+                                key={apt.id}
+                                className={cn(
+                                    "bg-white p-8 rounded-[2.5rem] border border-gray-100 shadow-sm hover:shadow-md transition-all flex flex-col sm:flex-row items-start sm:items-center gap-8 group",
+                                    apt.status === 'PENDING' && "border-amber-200 bg-amber-50/10"
+                                )}
+                            >
                                 {/* Time */}
                                 <div className="flex flex-col items-center justify-center min-w-[80px] py-4 bg-gray-50 rounded-2xl group-hover:bg-indigo-50 transition-colors">
                                     <span className="text-lg font-black text-gray-900 tracking-tighter">
@@ -103,7 +121,19 @@ export default function PlanningView({ initialAppointments }: { initialAppointme
                                         <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
                                             <User className="w-4 h-4 text-gray-400" />
                                         </div>
-                                        <h3 className="text-lg font-black text-gray-950 uppercase tracking-tight">{apt.clientName}</h3>
+                                        <div className="flex items-center gap-3">
+                                            <h3 className="text-lg font-black text-gray-950 uppercase tracking-tight">{apt.clientName}</h3>
+                                            {apt.status === 'PENDING' && (
+                                                <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-amber-100 text-amber-600 border border-amber-200">
+                                                    En attente
+                                                </span>
+                                            )}
+                                            {apt.status === 'CANCELLED' && (
+                                                <span className="text-[8px] font-black uppercase tracking-widest px-2 py-0.5 rounded-full bg-red-100 text-red-600 border border-red-200">
+                                                    Annulé
+                                                </span>
+                                            )}
+                                        </div>
                                     </div>
                                     <div className="flex flex-wrap gap-4 text-[10px] font-black text-gray-500 uppercase tracking-widest">
                                         <span className="flex items-center gap-2">
@@ -118,10 +148,40 @@ export default function PlanningView({ initialAppointments }: { initialAppointme
                                 </div>
 
                                 {/* Actions */}
-                                <div className="flex items-center gap-4 pt-4 sm:pt-0 border-t sm:border-t-0 border-gray-50 w-full sm:w-auto">
+                                <div className="flex items-center gap-2 pt-4 sm:pt-0 border-t sm:border-t-0 border-gray-50 w-full sm:w-auto">
+                                    {apt.status === 'PENDING' && (
+                                        <>
+                                            <button
+                                                onClick={() => handleStatusUpdate(apt.id, 'CONFIRMED')}
+                                                className="p-4 bg-emerald-50 rounded-2xl text-emerald-600 hover:bg-emerald-100 transition-all flex items-center justify-center"
+                                                title="Valider"
+                                            >
+                                                <Check className="w-5 h-5" />
+                                            </button>
+                                            <button
+                                                onClick={() => handleStatusUpdate(apt.id, 'CANCELLED')}
+                                                className="p-4 bg-amber-50 rounded-2xl text-amber-600 hover:bg-amber-100 transition-all flex items-center justify-center"
+                                                title="Refuser"
+                                            >
+                                                <X className="w-5 h-5" />
+                                            </button>
+                                        </>
+                                    )}
+                                    {['CONFIRMED', 'COMPLETED'].includes(apt.status) && (
+                                        <a
+                                            href={`/invoice/${apt.id}`}
+                                            target="_blank"
+                                            rel="noopener noreferrer"
+                                            className="p-4 bg-primary/5 rounded-2xl text-primary hover:bg-primary/10 transition-all flex items-center justify-center"
+                                            title="Facture"
+                                        >
+                                            <FileText className="w-5 h-5" />
+                                        </a>
+                                    )}
                                     <button
                                         onClick={() => handleDelete(apt.id)}
                                         className="p-4 bg-gray-50 rounded-2xl text-gray-400 hover:bg-red-50 hover:text-red-500 transition-all ml-auto"
+                                        title="Supprimer"
                                     >
                                         <Trash2 className="w-5 h-5" />
                                     </button>

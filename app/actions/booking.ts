@@ -178,10 +178,128 @@ export type AppointmentActionResult =
     | { success: false; error: string }
 
 export async function createAppointment(formData: FormData) {
-    // Re-use logic or call createPublicAppointment if appropriate, 
-    // but for signed-in clients we might want slight diffs.
-    // For now, let's just alias it or implement it.
+    const session = await auth()
+    if (!session || !session.user) {
+        return { success: false, error: "Vous devez être connecté pour réserver" }
+    }
 
-    // We can reuse createPublicAppointment logic but ensuring session user
-    return createPublicAppointment(formData)
+    const userId = formData.get('userId') as string // The Professional's ID
+    const serviceId = formData.get('serviceId') as string
+    const dateISO = formData.get('date') as string
+
+    if (!userId || !serviceId || !dateISO) {
+        return { success: false, error: "Données de réservation manquantes" }
+    }
+
+    const startAt = new Date(dateISO)
+    if (isNaN(startAt.getTime())) {
+        return { success: false, error: "Format de date invalide" }
+    }
+
+    try {
+        const service = await prisma.service.findUnique({
+            where: { id: serviceId, userId }
+        })
+
+        if (!service) {
+            return { success: false, error: "Service invalide pour ce professionnel" }
+        }
+
+        const endAt = addMinutes(startAt, service.durationMin)
+
+        // Check Working Hours
+        const dayOfWeek = getDay(startAt)
+        const workingHoursList = await prisma.workingHours.findMany({
+            where: { userId, dayOfWeek, active: true }
+        })
+
+        if (!workingHoursList.length) {
+            return { success: false, error: 'Le professionnel est fermé ce jour-là' }
+        }
+
+        const aptStartMin = startAt.getHours() * 60 + startAt.getMinutes()
+        const aptEndMin = endAt.getHours() * 60 + endAt.getMinutes()
+
+        const fitsInSomeRange = workingHoursList.some(wh => {
+            const [startH, startM] = wh.startTime.split(':').map(Number)
+            const [endH, endM] = wh.endTime.split(':').map(Number)
+            const startLimitMin = startH * 60 + startM
+            const endLimitMin = endH * 60 + endM
+            return aptStartMin >= startLimitMin && aptEndMin <= endLimitMin
+        })
+
+        if (!fitsInSomeRange) {
+            const first = workingHoursList[0]
+            return { success: false, error: `En dehors des horaires d'ouverture (${first.startTime} - ${first.endTime})` }
+        }
+
+        // Get or Create Client record for this professional
+        const clientEmail = session.user.email!
+        const clientName = session.user.name || "Client"
+
+        let client = await prisma.client.findUnique({
+            where: { userId_email: { userId, email: clientEmail } }
+        })
+
+        if (!client) {
+            client = await prisma.client.create({
+                data: {
+                    userId,
+                    name: clientName,
+                    email: clientEmail
+                }
+            })
+        }
+
+        // Create appointment
+        const appointment = await prisma.appointment.create({
+            data: {
+                userId, // Professional ID
+                startAt,
+                endAt,
+                serviceId,
+                clientId: client.id,
+                customerId: session.user.id, // Authenticated user ID
+                clientName: clientName,
+                clientEmail: clientEmail,
+                status: 'PENDING'
+            },
+            include: {
+                service: true,
+                user: {
+                    select: {
+                        businessName: true,
+                        address: true,
+                        phone: true
+                    }
+                }
+            }
+        })
+
+        // Send confirmation email
+        try {
+            await sendConfirmationEmail({
+                to: clientEmail,
+                clientName: clientName,
+                serviceName: appointment.service.name,
+                businessName: appointment.user.businessName || 'Notre établissement',
+                startAt: appointment.startAt,
+                endAt: appointment.endAt,
+                address: appointment.user.address || undefined,
+                phone: appointment.user.phone || undefined
+            })
+
+            await prisma.appointment.update({
+                where: { id: appointment.id },
+                data: { emailSent: true }
+            })
+        } catch (emailError) {
+            console.error('Failed to send confirmation email:', emailError)
+        }
+
+        return { success: true, data: appointment }
+    } catch (error) {
+        console.error("Booking creation error:", error)
+        return { success: false, error: "Une erreur est survenue lors de la création du rendez-vous" }
+    }
 }

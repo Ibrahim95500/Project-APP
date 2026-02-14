@@ -3,9 +3,10 @@ import { notFound } from "next/navigation"
 import Link from "next/link"
 import PageContainer from "@/components/ui/PageContainer"
 
-export default async function EstablishmentPage({ params }: { params: { slug: string } }) {
+export default async function EstablishmentPage({ params }: { params: Promise<{ slug: string }> }) {
+    const { slug } = await params
     const business = await prisma.user.findUnique({
-        where: { slug: params.slug },
+        where: { slug },
         include: {
             services: {
                 where: { active: true },
@@ -45,7 +46,7 @@ export default async function EstablishmentPage({ params }: { params: { slug: st
                     <div className="flex justify-between items-end mb-12 border-b border-primary/5 pb-6">
                         <h2 className="text-2xl font-black tracking-tight" style={{ color: 'var(--text-main)' }}>Nos Prestations</h2>
                         <Link
-                            href={`/etablissement/${params.slug}/reserver`}
+                            href={`/etablissement/${slug}/reserver`}
                             className="hidden md:inline-flex items-center justify-center rounded-full bg-primary px-10 py-4 text-[11px] font-black uppercase tracking-widest text-white shadow-xl shadow-primary/20 hover:brightness-110 active:scale-95 transition-all"
                         >
                             Réserver maintenant
@@ -76,7 +77,7 @@ export default async function EstablishmentPage({ params }: { params: { slug: st
                                         )}
                                     </div>
                                     <Link
-                                        href={`/etablissement/${params.slug}/reserver?serviceId=${service.id}`}
+                                        href={`/etablissement/${slug}/reserver?serviceId=${service.id}`}
                                         className="inline-flex items-center justify-center rounded-full border-2 border-primary/5 bg-primary/5 px-8 py-3.5 text-[10px] font-black uppercase tracking-widest text-gray-400 hover:border-primary hover:text-primary transition-all shadow-sm"
                                     >
                                         Choisir
@@ -89,7 +90,7 @@ export default async function EstablishmentPage({ params }: { params: { slug: st
                     {/* Mobile Sticky CTA */}
                     <div className="fixed bottom-0 left-0 right-0 p-6 border-t border-primary/5 bg-white/10 backdrop-blur-xl md:hidden z-50">
                         <Link
-                            href={`/etablissement/${params.slug}/reserver`}
+                            href={`/etablissement/${slug}/reserver`}
                             className="flex w-full items-center justify-center rounded-full bg-primary py-6 text-[11px] font-black uppercase tracking-widest text-white shadow-2xl shadow-primary-500/30 hover:brightness-110 active:scale-95 transition-all"
                         >
                             Réserver en ligne

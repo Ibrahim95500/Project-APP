@@ -151,6 +151,15 @@ export default async function ClientDashboard() {
                                                     apt.status === 'PENDING' ? 'En attente' :
                                                         apt.status}
                                             </span>
+                                            {apt.status === 'CONFIRMED' && (
+                                                <Link
+                                                    href={`/invoice/${apt.id}`}
+                                                    target="_blank"
+                                                    className="px-6 py-2 rounded-full bg-primary/5 text-primary text-[10px] font-black uppercase tracking-widest hover:bg-primary/10 transition-all text-center"
+                                                >
+                                                    Facture
+                                                </Link>
+                                            )}
                                             <button className="px-6 py-2 rounded-full border-2 border-red-500/20 text-red-500 text-[10px] font-black uppercase tracking-widest hover:bg-red-500/10 transition-all">
                                                 Annuler
                                             </button>

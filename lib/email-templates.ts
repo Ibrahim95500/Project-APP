@@ -6,7 +6,7 @@ interface AppointmentEmailData {
     serviceName: string
     businessName: string
     startAt: Date
-    endAt: Date
+    endAt?: Date
     address?: string
     phone?: string
 }
@@ -57,7 +57,7 @@ export function confirmationEmailTemplate(data: AppointmentEmailData) {
                 <div style="margin-bottom: 16px;">
                     <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 700;">📅 Date & Heure</div>
                     <div style="font-size: 16px; color: #475569; font-weight: 600;">
-                        ${format(startAt, "EEEE d MMMM yyyy", { locale: fr })} à ${format(startAt, "HH:mm")} - ${format(endAt, "HH:mm")}
+                        ${format(startAt, "EEEE d MMMM yyyy", { locale: fr })} à ${format(startAt, "HH:mm")} ${endAt ? `- ${format(endAt, "HH:mm")}` : ''}
                     </div>
                 </div>
 
@@ -225,6 +225,77 @@ export function verificationEmailTemplate(data: VerificationEmailData) {
             </p>
             <p style="font-size: 11px; color: #cbd5e1; margin: 8px 0 0 0;">
                 La plateforme de réservation nouvelle génération
+            </p>
+        </div>
+    </div>
+</body>
+</html>
+    `.trim()
+}
+export function invoiceEmailTemplate(data: AppointmentEmailData & { invoiceNumber: string; amount: number; invoiceUrl: string }) {
+    const { clientName, serviceName, businessName, startAt, invoiceNumber, amount, invoiceUrl } = data
+
+    return `
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Votre facture - ${businessName}</title>
+</head>
+<body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; background-color: #f8fafc; margin: 0; padding: 20px;">
+    <div style="max-width: 600px; margin: 0 auto; background-color: #ffffff; border-radius: 24px; overflow: hidden; box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);">
+        <!-- Header -->
+        <div style="background: linear-gradient(135deg, #0F172A 0%, #334155 100%); padding: 40px 30px; text-align: center;">
+            <h1 style="color: #ffffff; font-size: 32px; font-weight: 900; margin: 0; text-transform: uppercase; letter-spacing: -1px;">NEXO</h1>
+            <p style="color: rgba(255, 255, 255, 0.9); font-size: 14px; font-weight: 600; margin: 8px 0 0 0; text-transform: uppercase; letter-spacing: 2px;">Facture disponible</p>
+        </div>
+
+        <!-- Content -->
+        <div style="padding: 40px 30px;">
+            <p style="font-size: 18px; color: #1e293b; margin: 0 0 24px 0; font-weight: 600;">
+                Bonjour ${clientName},
+            </p>
+
+            <p style="font-size: 16px; color: #475569; line-height: 1.6; margin: 0 0 32px 0;">
+                La facture pour votre prestation <strong>${serviceName}</strong> chez <strong>${businessName}</strong> est maintenant disponible.
+            </p>
+
+            <!-- Invoice Details Card -->
+            <div style="background-color: #f8fafc; border-radius: 16px; padding: 24px; margin-bottom: 32px; border-left: 4px solid #0F172A;">
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 700;">Numéro de facture</div>
+                    <div style="font-size: 18px; color: #1e293b; font-weight: 700;">${invoiceNumber}</div>
+                </div>
+
+                <div style="margin-bottom: 16px;">
+                    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 700;">Date de prestation</div>
+                    <div style="font-size: 16px; color: #475569; font-weight: 600;">${format(startAt, "d MMMM yyyy", { locale: fr })}</div>
+                </div>
+
+                <div>
+                    <div style="font-size: 12px; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 4px; font-weight: 700;">Montant Total Pagé</div>
+                    <div style="font-size: 24px; color: #0F172A; font-weight: 900;">${amount} €</div>
+                </div>
+            </div>
+
+            <!-- CTA Button -->
+            <div style="text-align: center; margin: 32px 0;">
+                <a href="${invoiceUrl}" 
+                   style="display: inline-block; background-color: #0F172A; color: #ffffff; padding: 16px 32px; border-radius: 9999px; text-decoration: none; font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: 1.5px; box-shadow: 0 4px 6px rgba(15, 23, 42, 0.2);">
+                    Voir la facture complète
+                </a>
+            </div>
+
+            <p style="font-size: 14px; color: #94a3b8; line-height: 1.6; margin: 32px 0 0 0; text-align: center;">
+                Merci de votre confiance !
+            </p>
+        </div>
+
+        <!-- Footer -->
+        <div style="background-color: #f8fafc; padding: 24px 30px; text-align: center; border-top: 1px solid #e2e8f0;">
+            <p style="font-size: 12px; color: #94a3b8; margin: 0; text-transform: uppercase; letter-spacing: 1px; font-weight: 700;">
+                Propulsé par <span style="color: #7C3AED; font-weight: 900;">NEXO</span>
             </p>
         </div>
     </div>
